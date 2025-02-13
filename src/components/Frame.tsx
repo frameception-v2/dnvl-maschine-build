@@ -22,17 +22,66 @@ import { createStore } from "mipd";
 import { Label } from "~/components/ui/label";
 import { PROJECT_TITLE } from "~/lib/constants";
 
-function ExampleCard() {
+function MaschineBuildCard() {
+  const [frameDescription, setFrameDescription] = useState("");
+
+  const handleBuildFrame = useCallback(async () => {
+    try {
+      // Send frame details to server
+      await fetch('/api/build-frame', {
+        method: 'POST',
+        body: JSON.stringify({ description: frameDescription }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Notify user via Warpcast
+      await sdk.actions.sendNotification({
+        type: 'frame-built',
+        message: 'Your frame is being deployed!',
+        details: {
+          description: frameDescription,
+          statusUrl: `${window.location.origin}/status`
+        }
+      });
+      
+      console.log('Frame build initiated successfully');
+    } catch (error) {
+      console.error('Error building frame:', error);
+    }
+  }, [frameDescription]);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Welcome to the Frame Template</CardTitle>
+        <CardTitle>Build Your Frame</CardTitle>
         <CardDescription>
-          This is an example card that you can customize or remove
+          Describe your frame idea below and {MASCHINE_HANDLE} will create it instantly
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Label>Place content in a Card here.</Label>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col space-y-2">
+          <Label htmlFor="frame-description">Frame Description</Label>
+          <textarea
+            id="frame-description"
+            className="border rounded-lg p-2 min-h-[100px] text-sm"
+            placeholder="Describe the functionality and design of your frame..."
+            value={frameDescription}
+            onChange={(e) => setFrameDescription(e.target.value)}
+          />
+        </div>
+        
+        <PurpleButton 
+          onClick={handleBuildFrame}
+          disabled={!frameDescription.trim()}
+        >
+          🚀 Build & Deploy Frame
+        </PurpleButton>
+        
+        <div className="text-sm text-muted-foreground">
+          Tip: Mention 'build' and 'frame' in your description for faster processing
+        </div>
       </CardContent>
     </Card>
   );
@@ -140,7 +189,7 @@ export default function Frame() {
         <h1 className="text-2xl font-bold text-center mb-4 text-gray-700 dark:text-gray-300">
           {PROJECT_TITLE}
         </h1>
-        <ExampleCard />
+        <MaschineBuildCard />
       </div>
     </div>
   );
